@@ -34,6 +34,18 @@ const createServer = async (container) => {
     }),
   });
 
+  // REGISTER ROOT ROUTE
+  server.route({
+    method: 'GET',
+    path: '/',
+    handler: (request, h) => {
+      return {
+        status: 'success',
+        message: 'Forum API Server sudah menyala! 🚀',
+      };
+    },
+  });
+
   // REGISTER ROUTE PLUGINS
   await server.register([
     {
