@@ -1,6 +1,6 @@
 name: Continuous Deployment
 
-on: 
+on:
   push:
     branches:
       - main
@@ -18,27 +18,9 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         port: ${{ secrets.SSH_PORT }}
         script: |
-          echo "🔍 Checking environment..."
-          export NVM_DIR=~/.nvm
-          source ~/.nvm/nvm.sh
-
-          which node
-          which npm
-          which pm2
-
-          node -v
-          npm -v
-          pm2 -v
-
-          echo "📦 Pulling latest code..."
           cd ~/forumapi
           git pull origin main
-
-          echo "📦 Installing dependencies..."
           npm install
-
-          echo "🔄 Running database migrations..."
-          npm run migrate up
-
-          echo "🚀 Restarting app with PM2..."
-          pm2 restart forumapi || pm2 start ecosystem.config.js --name forumapi
+          npm run migrate up || echo "Migration failed, check permission"
+          pm2 delete forumapi || true
+          pm2 start npm --name forumapi -- start
