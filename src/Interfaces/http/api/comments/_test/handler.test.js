@@ -13,6 +13,7 @@ describe('CommentsHandler', () => {
       expect(handler._container).toBe(mockContainer);
       expect(typeof handler.postCommentHandler).toBe('function');
       expect(typeof handler.deleteCommentHandler).toBe('function');
+      expect(typeof handler.likeCommentHandler).toBe('function');
     });
   });
 
@@ -207,6 +208,79 @@ describe('CommentsHandler', () => {
         'thread-123',
         'comment-123',
         'user-456'
+      );
+    });
+  });
+
+  describe('likeCommentHandler', () => {
+    it('should return success status', async () => {
+      // Arrange
+      const mockLikeCommentUseCase = {
+        execute: jest.fn().mockResolvedValue(),
+      };
+      const mockContainer = {
+        getInstance: jest.fn().mockReturnValue(mockLikeCommentUseCase),
+      };
+
+      const request = {
+        auth: {
+          credentials: { id: 'user-123' },
+        },
+        params: { 
+          threadId: 'thread-123',
+          commentId: 'comment-123' 
+        },
+      };
+
+      const h = {};
+
+      const handler = new CommentsHandler(mockContainer);
+
+      // Action
+      const response = await handler.likeCommentHandler(request, h);
+
+      // Assert
+      expect(mockContainer.getInstance).toBeCalledWith('LikeCommentUseCase');
+      expect(mockLikeCommentUseCase.execute).toBeCalledWith(
+        'thread-123',
+        'comment-123',
+        'user-123'
+      );
+      expect(response).toEqual({
+        status: 'success',
+      });
+    });
+
+    it('should handle error when use case throws error', async () => {
+      // Arrange
+      const mockLikeCommentUseCase = {
+        execute: jest.fn().mockRejectedValue(new Error('Thread not found')),
+      };
+      const mockContainer = {
+        getInstance: jest.fn().mockReturnValue(mockLikeCommentUseCase),
+      };
+
+      const request = {
+        auth: {
+          credentials: { id: 'user-123' },
+        },
+        params: { 
+          threadId: 'thread-123',
+          commentId: 'comment-123' 
+        },
+      };
+
+      const h = {};
+
+      const handler = new CommentsHandler(mockContainer);
+
+      // Action & Assert
+      await expect(handler.likeCommentHandler(request, h)).rejects.toThrow('Thread not found');
+      expect(mockContainer.getInstance).toBeCalledWith('LikeCommentUseCase');
+      expect(mockLikeCommentUseCase.execute).toBeCalledWith(
+        'thread-123',
+        'comment-123',
+        'user-123'
       );
     });
   });

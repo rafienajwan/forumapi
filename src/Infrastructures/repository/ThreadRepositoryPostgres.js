@@ -56,12 +56,34 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     }
   }
 
+  async verifyThreadExists(threadId) {
+    const query = {
+      text: "SELECT id FROM threads WHERE id = $1",
+      values: [threadId],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new NotFoundError("thread tidak ditemukan");
+    }
+  }
+
   async getCommentsByThreadId(threadId) {
     const query = {
       text: `
-        SELECT comments.id, users.username, comments.date, comments.content, comments.is_delete
+        SELECT 
+          comments.id, 
+          users.username, 
+          comments.date, 
+          comments.content, 
+          comments.is_delete,
+          COALESCE(like_counts.like_count, 0) as like_count
         FROM comments
         JOIN users ON comments.owner = users.id
+        LEFT JOIN (
+          SELECT comment_id, COUNT(*) as like_count
+          FROM comment_likes
+          GROUP BY comment_id
+        ) like_counts ON comments.id = like_counts.comment_id
         WHERE comments.thread_id = $1
         ORDER BY comments.date ASC
       `,
@@ -69,6 +91,30 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     };
     const result = await this._pool.query(query);
     // Return date as string (no conversion needed, thanks to pg type parser override)
+    return result.rows.map((row) => ({
+      ...row,
+      date: row.date,
+      like_count: parseInt(row.like_count, 10),
+    }));
+  }
+
+  async getRepliesByCommentId(commentId) {
+    const query = {
+      text: `
+        SELECT 
+          replies.id, 
+          users.username, 
+          replies.date, 
+          replies.content, 
+          replies.is_delete
+        FROM replies
+        JOIN users ON replies.owner = users.id
+        WHERE replies.comment_id = $1
+        ORDER BY replies.date ASC
+      `,
+      values: [commentId],
+    };
+    const result = await this._pool.query(query);
     return result.rows.map((row) => ({
       ...row,
       date: row.date,
