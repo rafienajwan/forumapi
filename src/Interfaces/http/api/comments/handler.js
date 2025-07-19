@@ -4,6 +4,7 @@ class CommentsHandler {
 
     this.postCommentHandler = this.postCommentHandler.bind(this);
     this.deleteCommentHandler = this.deleteCommentHandler.bind(this);
+    this.likeCommentHandler = this.likeCommentHandler.bind(this);
   }
 
   async postCommentHandler(request, h) {
@@ -33,6 +34,17 @@ class CommentsHandler {
     const { id: owner } = request.auth.credentials;
     const { threadId, commentId } = request.params;
     await deleteCommentUseCase.execute(threadId, commentId, owner);
+
+    return {
+      status: "success",
+    };
+  }
+
+  async likeCommentHandler(request, h) {
+    const likeCommentUseCase = this._container.getInstance("LikeCommentUseCase");
+    const { id: owner } = request.auth.credentials;
+    const { threadId, commentId } = request.params;
+    await likeCommentUseCase.execute(threadId, commentId, owner);
 
     return {
       status: "success",
