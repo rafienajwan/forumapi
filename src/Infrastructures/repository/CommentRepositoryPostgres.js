@@ -46,14 +46,74 @@ class CommentRepositoryPostgres extends CommentRepository {
     }
   }
 
+  async verifyCommentExists(commentId) {
+    const query = {
+      text: "SELECT id FROM comments WHERE id = $1",
+      values: [commentId],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new Error("COMMENT_REPOSITORY.COMMENT_NOT_FOUND");
+    }
+  }
+
   async getCommentsByThreadId(threadId) {
     const query = {
-      text: `SELECT id, content, owner, is_delete, date
-             FROM comments WHERE thread_id = $1 ORDER BY date ASC`,
+      text: `SELECT c.id, c.content, c.owner, c.is_delete, c.date, u.username,
+             COUNT(cl.id) as like_count
+             FROM comments c
+             LEFT JOIN users u ON c.owner = u.id
+             LEFT JOIN comment_likes cl ON c.id = cl.comment_id
+             WHERE c.thread_id = $1 
+             GROUP BY c.id, c.content, c.owner, c.is_delete, c.date, u.username
+             ORDER BY c.date ASC`,
       values: [threadId],
     };
     const result = await this._pool.query(query);
     return result.rows;
+  }
+
+  async verifyCommentExists(commentId) {
+    const query = {
+      text: "SELECT id FROM comments WHERE id = $1",
+      values: [commentId],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new Error("COMMENT_REPOSITORY.COMMENT_NOT_FOUND");
+    }
+  }
+
+  async likeComment(commentId, owner) {
+    const id = `like-${this._idGenerator()}`;
+    const query = {
+      text: `INSERT INTO comment_likes (id, comment_id, owner, date)
+             VALUES ($1, $2, $3, NOW())`,
+      values: [id, commentId, owner],
+    };
+    await this._pool.query(query);
+  }
+
+  async unlikeComment(commentId, owner) {
+    const query = {
+      text: "DELETE FROM comment_likes WHERE comment_id = $1 AND owner = $2",
+      values: [commentId, owner],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new Error("COMMENT_LIKE.NOT_FOUND");
+    }
+  }
+
+  async verifyCommentLike(commentId, owner) {
+    const query = {
+      text: "SELECT id FROM comment_likes WHERE comment_id = $1 AND owner = $2",
+      values: [commentId, owner],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new Error("COMMENT_LIKE.NOT_FOUND");
+    }
   }
 }
 

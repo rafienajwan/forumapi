@@ -64,6 +64,20 @@ DomainErrorTranslator._directories = {
   "COMMENT_REPOSITORY.NOT_THE_OWNER": new AuthorizationError(
     "anda tidak berhak mengakses resource ini",
   ),
+
+  // Reply errors
+  "NEW_REPLY.NOT_CONTAIN_NEEDED_PROPERTY": new InvariantError(
+    "tidak dapat membuat balasan baru karena properti yang dibutuhkan tidak ada",
+  ),
+  "NEW_REPLY.NOT_MEET_DATA_TYPE_SPECIFICATION": new InvariantError(
+    "tidak dapat membuat balasan baru karena tipe data tidak sesuai",
+  ),
+  "REPLY_REPOSITORY.REPLY_NOT_FOUND": new NotFoundError(
+    "balasan tidak ditemukan",
+  ),
+  "REPLY_REPOSITORY.NOT_THE_OWNER": new AuthorizationError(
+    "anda tidak berhak mengakses resource ini",
+  ),
 };
 
 module.exports = DomainErrorTranslator;
