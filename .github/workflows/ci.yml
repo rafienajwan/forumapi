@@ -18,8 +18,8 @@ jobs:
       postgres:
         image: postgres
         env:
-         POSTGRES_USER: developer
-         POSTGRES_PASSWORD: supersecretpassword
+         POSTGRES_USER: rafie_anjasmara
+         POSTGRES_PASSWORD: password
          POSTGRES_DB: forumapi_test
          
         options: >-
