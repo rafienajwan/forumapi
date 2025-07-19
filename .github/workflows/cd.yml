@@ -24,3 +24,4 @@ jobs:
           npm run migrate up || echo "Migration failed, check permission"
           pm2 delete forumapi || true
           pm2 start npm --name forumapi -- start
+          echo "success!"
