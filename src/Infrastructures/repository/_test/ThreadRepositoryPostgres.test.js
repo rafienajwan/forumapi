@@ -5,6 +5,7 @@ const pool = require("../../database/postgres/pool");
 const ThreadsTableTestHelper = require("../../../../tests/ThreadsTableTestHelper");
 const UsersTableTestHelper = require("../../../../tests/UsersTableTestHelper");
 const CommentsTableTestHelper = require("../../../../tests/CommentsTableTestHelper");
+const RepliesTableTestHelper = require("../../../../tests/RepliesTableTestHelper");
 const ThreadRepositoryPostgres = require("../ThreadRepositoryPostgres");
 const NewThread = require("../../../Domains/threads/entities/NewThread");
 const NotFoundError = require("../../../Commons/exceptions/NotFoundError");
@@ -227,6 +228,55 @@ describe("ThreadRepositoryPostgres", () => {
       // Assert
       expect(comments).toHaveLength(0);
       expect(comments).toEqual([]);
+    });
+  });
+
+  describe('getRepliesByCommentId function', () => {
+    it('should return replies correctly', async () => {
+      // Arrange
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
+      const userId = 'user-123';
+      const threadId = 'thread-123';
+      const commentId = 'comment-123';
+      
+      await UsersTableTestHelper.addUser({ id: userId, username: 'testuser' });
+      await ThreadsTableTestHelper.addThread({ id: threadId, owner: userId });
+      await CommentsTableTestHelper.addComment({ 
+        id: commentId, 
+        thread_id: threadId,
+        owner: userId 
+      });
+      await RepliesTableTestHelper.addReply({
+        id: 'reply-123',
+        comment_id: commentId,
+        owner: userId,
+        content: 'sebuah balasan'
+      });
+
+      // Action
+      const replies = await threadRepositoryPostgres.getRepliesByCommentId(commentId);
+
+      // Assert
+      expect(replies).toHaveLength(1);
+      expect(replies[0]).toStrictEqual({
+        id: 'reply-123',
+        content: 'sebuah balasan',
+        date: expect.any(String), // Ubah dari Date ke String
+        username: 'testuser',
+        is_delete: false
+      });
+    });
+
+    it('should return empty array when no replies found', async () => {
+      // Arrange
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
+      const commentId = 'comment-xxx';
+
+      // Action
+      const replies = await threadRepositoryPostgres.getRepliesByCommentId(commentId);
+
+      // Assert
+      expect(replies).toHaveLength(0);
     });
   });
 });
