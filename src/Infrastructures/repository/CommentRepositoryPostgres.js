@@ -73,17 +73,6 @@ class CommentRepositoryPostgres extends CommentRepository {
     return result.rows;
   }
 
-  async verifyCommentExists(commentId) {
-    const query = {
-      text: "SELECT id FROM comments WHERE id = $1",
-      values: [commentId],
-    };
-    const result = await this._pool.query(query);
-    if (!result.rowCount) {
-      throw new Error("COMMENT_REPOSITORY.COMMENT_NOT_FOUND");
-    }
-  }
-
   async likeComment(commentId, owner) {
     const id = `like-${this._idGenerator()}`;
     const query = {
