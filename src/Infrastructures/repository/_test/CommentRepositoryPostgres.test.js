@@ -182,56 +182,34 @@ describe("CommentRepositoryPostgres", () => {
     it("should not throw error when comment exists", async () => {
       // Arrange
       const commentId = "comment-123";
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, () => "123");
-
-      // Tambahkan komentar baru ke database
+      const threadId = "thread-123";
+      const userId = "user-123";
+      
+      // Tambahkan data yang dibutuhkan
+      await UsersTableTestHelper.addUser({ id: userId, username: 'uniqueuser' });
+      await ThreadsTableTestHelper.addThread({ id: threadId, owner: userId });
       await CommentsTableTestHelper.addComment({
         id: commentId,
-        content: "Komentar test",
-        thread_id: "thread-1",
-        owner: "user-1",
-        date: new Date("2023-01-01"),
+        thread_id: threadId,
+        owner: userId,
+        content: "test comment"
       });
+      
+      // Buat instance repository
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {});
 
-      // Action & Assert
-      await expect(
-        commentRepositoryPostgres.verifyCommentExists(commentId)
-      ).resolves.not.toThrow();
+      // Action dan Assert
+      await expect(commentRepositoryPostgres.verifyCommentExists(commentId))
+        .resolves.not.toThrow();
     });
 
-    it("should throw error when comment not found", async () => {
+    it("should throw COMMENT_REPOSITORY.COMMENT_NOT_FOUND when comment not exists", async () => {
       // Arrange
-      const nonExistingCommentId = "comment-tidak-ada";
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, () => "123");
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {});
 
-      // Action & Assert
-      await expect(
-        commentRepositoryPostgres.verifyCommentExists(nonExistingCommentId)
-      ).rejects.toThrow("COMMENT_REPOSITORY.COMMENT_NOT_FOUND");
-    });
-
-    // Hapus test spy yang bermasalah dan ganti dengan test yang lebih sederhana
-    it("should check database for comment existence", async () => {
-      // Arrange
-      const commentId = "comment-456";
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, () => "123");
-      
-      // Tambahkan komentar ke database
-      await CommentsTableTestHelper.addComment({
-        id: commentId,
-        content: "Komentar test",
-        thread_id: "thread-1",
-        owner: "user-1",
-        date: new Date("2023-01-01"),
-      });
-
-      // Action
-      await commentRepositoryPostgres.verifyCommentExists(commentId);
-      
-      // Assert - verify data exists in database
-      const comments = await CommentsTableTestHelper.findCommentById(commentId);
-      expect(comments).toHaveLength(1);
-      expect(comments[0].id).toBe(commentId);
+      // Action dan Assert
+      await expect(commentRepositoryPostgres.verifyCommentExists("comment-not-exist"))
+        .rejects.toThrow("COMMENT_REPOSITORY.COMMENT_NOT_FOUND");
     });
   });
 
